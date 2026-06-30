@@ -1,9 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import { ref, onValue, update, remove, increment as incrementFirebase } from 'firebase/database';
 import { db } from '../../lib/firebase';
-import { Search, Filter, X, ChevronRight, Copy, Trash2, Plus, Minus, Package } from 'lucide-react';
+import { Search, Filter, X, ChevronRight, Copy, Trash2, Package, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { allProducts } from '../../data/products';
+
+const OrderItemRow = ({ orderId, item, idx, handleUpdateOrderItem }) => {
+  const [qty, setQty] = useState(item.quantity);
+  const isChanged = qty !== item.quantity && qty > 0;
+
+  useEffect(() => {
+    setQty(item.quantity);
+  }, [item.quantity]);
+
+  return (
+    <div className="flex flex-row items-center justify-between p-3 sm:p-4 bg-[#F3ECE4]/50 rounded-2xl border border-[#E8D8C8]/40 gap-2 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-[#E8D8C8]/50 flex-shrink-0 overflow-hidden flex items-center justify-center text-[#9E3D3D]">
+          {(() => {
+            const match = allProducts.find(p => p.name === item.name || p.id === item.id);
+            return match && match.image ? (
+              <img src={match.image} alt={item.name} className="w-full h-full object-cover" />
+            ) : (
+              <Package size={14} />
+            );
+          })()}
+        </div>
+        <span className="text-[#3A2E2A] font-medium text-xs sm:text-sm truncate" title={item.name}>
+          {item.name}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-end gap-3 sm:gap-4 shrink-0">
+        <div className="flex items-center shrink-0 gap-2">
+          <input
+            type="number"
+            min="1"
+            value={qty}
+            onChange={(e) => setQty(parseInt(e.target.value) || '')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && isChanged) {
+                handleUpdateOrderItem(orderId, idx, qty);
+              }
+            }}
+            title="Edit quantity"
+            className="w-12 h-8 bg-white border border-[#E8D8C8] hover:border-[#9E3D3D]/50 rounded-lg text-center text-sm text-[#3A2E2A] font-medium focus:outline-none focus:border-[#9E3D3D] transition-colors"
+          />
+          {isChanged && (
+            <button
+              onClick={() => handleUpdateOrderItem(orderId, idx, qty)}
+              className="h-8 px-3 bg-[#731625] text-white rounded-lg text-xs font-medium hover:bg-[#5a111d] transition-colors shadow-sm flex items-center gap-1"
+            >
+              <Save size={12} /> Update
+            </button>
+          )}
+        </div>
+        <span className="text-[#3A2E2A] font-medium text-xs sm:text-sm whitespace-nowrap min-w-[60px] text-right">
+          {item.price * item.quantity} MAD
+        </span>
+        <button 
+          onClick={() => handleUpdateOrderItem(orderId, idx, 0)}
+          className="p-1.5 text-[#6B4F4F]/60 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors shrink-0"
+          title="Remove item"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const OrdersTable = () => {
   const [orders, setOrders] = useState([]);
@@ -346,59 +411,13 @@ const OrdersTable = () => {
                 <h3 className="text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold mb-4">Products</h3>
                 <div className="space-y-4">
                   {(selectedOrder.items || []).map((item, idx) => (
-                    <div key={idx} className="flex flex-row items-center justify-between p-3 sm:p-4 bg-[#F3ECE4]/50 rounded-2xl border border-[#E8D8C8]/40 gap-2 sm:gap-4">
-                      
-                      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-[#E8D8C8]/50 flex-shrink-0 overflow-hidden flex items-center justify-center text-[#9E3D3D]">
-                          {(() => {
-                            const match = allProducts.find(p => p.name === item.name || p.id === item.id);
-                            return match && match.image ? (
-                              <img src={match.image} alt={item.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <Package size={14} />
-                            );
-                          })()}
-                        </div>
-                        <span className="text-[#3A2E2A] font-medium text-xs sm:text-sm truncate" title={item.name}>
-                          {item.name}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-end gap-3 sm:gap-4 shrink-0">
-                        <div className="flex items-center shrink-0">
-                          <input
-                            type="number"
-                            min="1"
-                            defaultValue={item.quantity}
-                            key={`qty-${idx}-${item.quantity}`}
-                            onBlur={(e) => {
-                              const val = parseInt(e.target.value, 10);
-                              if (!isNaN(val) && val > 0 && val !== item.quantity) {
-                                handleUpdateOrderItem(selectedOrder.id, idx, val);
-                              } else {
-                                e.target.value = item.quantity;
-                              }
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') e.target.blur();
-                            }}
-                            title="Edit quantity"
-                            className="w-10 h-7 bg-[#E8D8C8]/30 border border-[#E8D8C8] hover:border-[#9E3D3D]/50 rounded-md text-center text-xs text-[#3A2E2A] font-medium focus:outline-none focus:border-[#9E3D3D] focus:bg-[#FAF6F2] transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                        </div>
-                        <span className="text-[#3A2E2A] font-medium text-xs sm:text-sm whitespace-nowrap">
-                          {item.price * item.quantity} MAD
-                        </span>
-                        <button 
-                          onClick={() => handleUpdateOrderItem(selectedOrder.id, idx, 0)}
-                          className="p-1.5 text-[#6B4F4F]/60 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors shrink-0"
-                          title="Remove item"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-
-                    </div>
+                    <OrderItemRow 
+                      key={idx} 
+                      orderId={selectedOrder.id} 
+                      item={item} 
+                      idx={idx} 
+                      handleUpdateOrderItem={handleUpdateOrderItem} 
+                    />
                   ))}
                   {(selectedOrder.items || []).length === 0 && (
                     <div className="text-center py-6 text-[#6B4F4F]/60 text-sm">
