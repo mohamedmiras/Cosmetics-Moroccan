@@ -38,8 +38,7 @@ const ProductCard = ({ product }) => {
         {/* Subtitle & Tag */}
         <motion.div 
           initial={{ opacity: 0, x: 10 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, amount: 0.8 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="flex items-center gap-2 mb-3"
         >
@@ -50,8 +49,7 @@ const ProductCard = ({ product }) => {
         {/* Title Row */}
         <motion.div 
           initial={{ opacity: 0, x: 10 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, amount: 0.8 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.25, delay: 0.02, ease: "easeOut" }}
           className="mb-4"
         >
@@ -62,8 +60,7 @@ const ProductCard = ({ product }) => {
         
         <motion.div 
           initial={{ scaleX: 0, originX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: true, amount: 0.8 }}
+          animate={{ scaleX: 1 }}
           transition={{ duration: 0.3, delay: 0.04, ease: "circOut" }}
           className="w-12 h-[1px] bg-[#E8D8C8] mb-4"
         ></motion.div>
@@ -71,8 +68,7 @@ const ProductCard = ({ product }) => {
         {/* Description */}
         <motion.p 
           initial={{ opacity: 0, y: 5 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.8 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.05, ease: "easeOut" }}
           className="text-[#5a443f] font-light leading-relaxed text-sm mb-6"
         >
@@ -82,8 +78,7 @@ const ProductCard = ({ product }) => {
         {/* Stock Info */}
         <motion.div 
           initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, amount: 0.8 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.06 }}
           className="flex justify-between items-center text-[10px] uppercase tracking-widest text-[#8c7a6b] font-medium mb-6"
         >
