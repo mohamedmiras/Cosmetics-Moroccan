@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ref, onValue, update } from 'firebase/database';
+import { ref, onValue, update, remove } from 'firebase/database';
 import { db } from '../../lib/firebase';
 import { Search, Filter, X, ChevronRight, Copy, Trash2, Plus, Minus, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -54,6 +54,17 @@ const OrdersTable = () => {
       console.error("Error updating status:", error);
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this order? This action cannot be undone and it will be removed from the customer tracking portal as well.")) return;
+    try {
+      await remove(ref(db, `orders/${orderId}`));
+      setSelectedOrder(null);
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      alert("Failed to delete order");
     }
   };
 
@@ -374,9 +385,17 @@ const OrdersTable = () => {
 
               {/* Sticky Footer */}
               <div className="p-6 md:px-10 md:py-6 border-t border-[#E8D8C8]/50 bg-[#FAF6F2] shrink-0 flex justify-between items-end">
-                <div>
-                  <p className="text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold mb-1">Total Amount</p>
-                  <p className="text-[#6B4F4F] text-sm">{selectedOrder.totalItems} items</p>
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold mb-1">Total Amount</p>
+                    <p className="text-[#6B4F4F] text-sm">{selectedOrder.totalItems} items</p>
+                  </div>
+                  <button 
+                    onClick={() => handleDeleteOrder(selectedOrder.id)}
+                    className="text-red-600 hover:text-red-800 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                  >
+                    <Trash2 size={14} /> Delete Order
+                  </button>
                 </div>
                 <div className="text-right flex items-end gap-1.5">
                   <span className="text-3xl font-light text-[#3A2E2A] leading-none">{selectedOrder.totalAmount}</span>
