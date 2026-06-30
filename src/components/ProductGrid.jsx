@@ -7,13 +7,13 @@ const ProductGrid = ({ products }) => {
 
   const scrollLeft = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -400, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: -480, behavior: 'smooth' });
     }
   };
 
   const scrollRight = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 400, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: 480, behavior: 'smooth' });
     }
   };
 
@@ -55,7 +55,7 @@ const ProductGrid = ({ products }) => {
         
         <div 
           ref={scrollRef}
-          className="flex gap-4 md:gap-8 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-4 md:px-[5vw] pb-12 pt-8 will-change-scroll"
+          className="flex gap-4 md:gap-8 overflow-x-auto scrollbar-hide px-4 md:px-[5vw] pb-12 pt-8 will-change-scroll"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {products.map((product) => (

@@ -28,7 +28,7 @@ function App() {
 
   return (
     <CartProvider>
-      <div className="min-h-screen bg-[#F3ECE4] selection:bg-[#731625]/30 selection:text-[#3a2522] transition-colors duration-500">
+      <div className="min-h-screen bg-[#F3ECE4] selection:bg-[#731625]/30 selection:text-[#3a2522] transition-colors duration-500 overflow-x-hidden">
         
         {isCheckout ? (
           <CheckoutPage onBack={() => {

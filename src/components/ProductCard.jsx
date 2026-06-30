@@ -13,7 +13,7 @@ const ProductCard = ({ product }) => {
   const isOutOfStock = availableQty <= 0;
 
   return (
-    <div className="w-full flex flex-col group relative bg-[#FAF6F2] rounded-3xl border border-[#E8D8C8]/60 overflow-hidden transition-shadow duration-700 hover:shadow-[0_20px_60px_rgba(45,31,31,0.08)] flex-shrink-0 snap-center md:w-[450px] transform-gpu">
+    <div className="w-full flex flex-col group relative bg-[#FAF6F2] rounded-3xl border border-[#E8D8C8]/60 overflow-hidden transition-shadow duration-700 hover:shadow-[0_20px_60px_rgba(45,31,31,0.08)] flex-shrink-0 md:w-[450px] transform-gpu">
       
       {/* Image Container - Premium Full-Bleed Image */}
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-[#F3ECE4]">
