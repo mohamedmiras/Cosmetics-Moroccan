@@ -96,7 +96,9 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
   const handleUpdateQuantity = (itemId, delta) => {
     setEditedItems(prev => prev.map(item => {
       if (item.id === itemId) {
-        return { ...item, quantity: Math.max(0, item.quantity + delta) };
+        const newQty = item.quantity + delta;
+        // Enforce boundaries: min 0, max 50
+        return { ...item, quantity: Math.min(50, Math.max(0, newQty)) };
       }
       return item;
     }));
