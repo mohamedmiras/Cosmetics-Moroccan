@@ -27,6 +27,7 @@ const CheckoutPage = ({ onBack }) => {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [generatedOrderId, setGeneratedOrderId] = useState(null);
 
   const handleNextStep = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -72,9 +73,10 @@ const CheckoutPage = ({ onBack }) => {
         createdAt: new Date().toISOString()
       };
       
-      await push(ref(db, 'orders'), orderData);
+      const newOrderRef = await push(ref(db, 'orders'), orderData);
       
       // ONLY show success after the database has actually saved the order
+      setGeneratedOrderId(newOrderRef.key);
       clearCart();
       setOrderSuccess(true);
     } catch (error) {
@@ -120,15 +122,26 @@ const CheckoutPage = ({ onBack }) => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
-            className="text-[#5a443f] text-base md:text-lg font-light mb-10 leading-relaxed"
+            className="text-[#5a443f] text-base md:text-lg font-light mb-6 leading-relaxed"
           >
             Thank you, <span className="font-medium text-[#2d1f1f]">{name}</span>. Your luxury items are being beautifully prepared for you.
           </motion.p>
 
-          <motion.button 
+          <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.6, ease: "easeOut" }}
+            className="bg-white/60 backdrop-blur-md px-6 py-4 rounded-2xl border border-[#E8D8C8] shadow-sm mb-10 w-full"
+          >
+            <p className="text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold mb-2">Your Order ID</p>
+            <p className="text-xl font-medium text-[#731625] tracking-wider select-all">{generatedOrderId}</p>
+            <p className="text-xs text-[#6B4F4F] mt-2">Please save this ID to track your order later.</p>
+          </motion.div>
+
+          <motion.button 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.6, ease: "easeOut" }}
             onClick={onBack}
             className="px-10 py-4 bg-[#2d1f1f] text-white font-medium tracking-[0.15em] uppercase text-xs hover:bg-[#1a1111] transition-all duration-300 rounded-full shadow-[0_8px_20px_rgba(45,31,31,0.2)] hover:shadow-[0_15px_30px_rgba(45,31,31,0.3)]"
           >
