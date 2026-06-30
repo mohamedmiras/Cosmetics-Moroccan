@@ -59,8 +59,10 @@ const ProductsAnalytics = () => {
   }, []);
 
   const products = Object.entries(productMap).sort((a, b) => b[1].totalQty - a[1].totalQty);
-
   const toggle = (name) => setExpanded(prev => prev === name ? null : name);
+
+  const totalRevenue = products.reduce((sum, [, d]) => sum + d.totalRevenue, 0);
+  const totalQty = products.reduce((sum, [, d]) => sum + d.totalQty, 0);
 
   return (
     <div className="space-y-8">
@@ -68,6 +70,20 @@ const ProductsAnalytics = () => {
         <h1 className="text-2xl md:text-3xl font-light tracking-wide text-[#3A2E2A] mb-2">Products</h1>
         <p className="text-[#6B4F4F]/70 text-sm tracking-wide">See which customers ordered each product</p>
       </div>
+
+      {/* Summary Stats */}
+      {!loading && (
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-[#FAF6F2] border border-[#E8D8C8]/60 rounded-3xl p-6 shadow-[0_8px_30px_rgba(107,79,79,0.03)] flex flex-col gap-2">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold">Total Revenue</p>
+            <p className="text-3xl font-light text-[#3A2E2A] tracking-tight">{totalRevenue} <span className="text-base font-medium text-[#9E3D3D]">MAD</span></p>
+          </div>
+          <div className="bg-[#FAF6F2] border border-[#E8D8C8]/60 rounded-3xl p-6 shadow-[0_8px_30px_rgba(107,79,79,0.03)] flex flex-col gap-2">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold">Total Qty Sold</p>
+            <p className="text-3xl font-light text-[#3A2E2A] tracking-tight">{totalQty} <span className="text-base font-medium text-[#9E3D3D]">Units</span></p>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-4">
