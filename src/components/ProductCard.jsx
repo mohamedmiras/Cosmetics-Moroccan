@@ -18,11 +18,11 @@ const ProductCard = ({ product }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="w-full flex flex-col group relative bg-[#FAF6F2] rounded-3xl border border-[#E8D8C8]/60 overflow-hidden transition-shadow duration-700 hover:shadow-[0_20px_60px_rgba(45,31,31,0.08)] flex-shrink-0 md:w-[450px] transform-gpu"
+      className="h-full w-full flex flex-col group relative bg-white rounded-3xl border border-[#E8D8C8]/60 overflow-hidden transition-shadow duration-700 hover:shadow-[0_20px_60px_rgba(45,31,31,0.08)] flex-shrink-0 md:w-[450px] transform-gpu"
     >
       
       {/* Image Container - Premium Framed Image */}
-      <div className="relative w-full aspect-[4/3] bg-[#FAF6F2] p-4 pb-8">
+      <div className="relative w-full aspect-[4/3] bg-white p-4 pb-2 md:p-6 md:pb-2">
         <div className="w-full h-full relative rounded-2xl overflow-hidden border-2 border-[#E8D8C8]/60 shadow-sm">
           <img 
             src={product.image} 
@@ -41,7 +41,7 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Content Container */}
-      <div className="flex flex-col flex-1 p-8 pt-6 z-10 bg-white rounded-t-[2.5rem] border-t border-[#F3ECE4] -mt-6 shadow-[0_-10px_20px_rgba(45,31,31,0.02)] overflow-hidden">
+      <div className="flex flex-col flex-1 p-6 md:p-8 md:pt-4 z-10 bg-white overflow-hidden">
         
         {/* Subtitle & Tag */}
         <motion.div 
