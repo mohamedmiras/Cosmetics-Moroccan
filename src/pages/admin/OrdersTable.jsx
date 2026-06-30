@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ref, onValue, update, remove, increment as incrementFirebase } from 'firebase/database';
 import { db } from '../../lib/firebase';
-import { Search, Filter, X, ChevronRight, Copy, Trash2, Package, Save } from 'lucide-react';
+import { Search, Filter, X, ChevronRight, Copy, Trash2, Package, Save, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { allProducts } from '../../data/products';
 
@@ -196,6 +196,52 @@ const OrdersTable = () => {
     return matchesSearch && matchesStatus;
   });
 
+  const exportToCSV = () => {
+    // Determine headers
+    const productNames = allProducts.map(p => p.name);
+    const headers = ["Name", "Phone Number", "Status", "Order Date", ...productNames];
+
+    // Generate rows
+    const csvRows = filteredOrders.map(order => {
+      // Map items to an easily searchable object by name
+      const itemQtyMap = {};
+      (order.items || []).forEach(item => {
+        itemQtyMap[item.name] = (itemQtyMap[item.name] || 0) + item.quantity;
+      });
+
+      // Build the row array
+      const row = [
+        `"${(order.customerName || '').replace(/"/g, '""')}"`,
+        `"${order.phoneNumber || ''}"`,
+        `"${order.status || 'Pending'}"`,
+        `"${order.createdAt ? new Date(order.createdAt).toLocaleString() : ''}"`
+      ];
+
+      // Add product quantities
+      productNames.forEach(prodName => {
+        row.push(itemQtyMap[prodName] || 0);
+      });
+
+      return row.join(",");
+    });
+
+    // Combine headers and rows
+    const csvContent = [headers.join(","), ...csvRows].join("\n");
+
+    // Trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -209,13 +255,22 @@ const OrdersTable = () => {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-light tracking-wide text-[#3A2E2A] mb-1">Orders</h1>
           <p className="text-[#6B4F4F]/70 text-sm tracking-wide">Manage customer orders and status</p>
         </div>
+        
+        <button
+          onClick={exportToCSV}
+          className="flex items-center justify-center gap-2 bg-[#FAF6F2] text-[#3A2E2A] px-5 py-2.5 rounded-xl border border-[#E8D8C8] hover:bg-[#E8D8C8]/60 transition-colors shadow-sm font-medium text-sm"
+        >
+          <Download size={16} />
+          Export CSV
+        </button>
+      </div>
 
-        {/* Search + Filter — stack on mobile, row on desktop */}
+      {/* Search + Filter — stack on mobile, row on desktop */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B4F4F]/40" size={16} />
