@@ -41,9 +41,6 @@ const CheckoutPage = ({ onBack }) => {
     
     // Simulate cinematic processing delay for premium feel
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setOrderSuccess(true);
-    setIsProcessing(false);
 
     try {
       const deductionPromises = cartItems.map((item) => {
@@ -77,8 +74,14 @@ const CheckoutPage = ({ onBack }) => {
       };
       
       await push(ref(db, 'orders'), orderData);
+      
+      // ONLY show success after the database has actually saved the order
+      setOrderSuccess(true);
     } catch (error) {
       console.error('Checkout processing failed:', error);
+      alert("There was an error processing your order. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
