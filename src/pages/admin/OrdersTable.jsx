@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ref, onValue, update, remove } from 'firebase/database';
+import { ref, onValue, update, remove, increment as incrementFirebase } from 'firebase/database';
 import { db } from '../../lib/firebase';
 import { Search, Filter, X, ChevronRight, Copy, Trash2, Plus, Minus, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -60,6 +60,17 @@ const OrdersTable = () => {
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm("Are you sure you want to permanently delete this order? This action cannot be undone and it will be removed from the customer tracking portal as well.")) return;
     try {
+      const orderToDelete = orders.find(o => o.id === orderId);
+      if (orderToDelete && orderToDelete.items) {
+        // Return stock back to inventory
+        const stockPromises = orderToDelete.items.map(item => {
+          return update(ref(db), {
+            [`products/${item.id}/quantity`]: incrementFirebase(item.quantity)
+          }).catch(err => console.warn("Failed to restore stock for", item.id, err));
+        });
+        await Promise.all(stockPromises);
+      }
+
       await remove(ref(db, `orders/${orderId}`));
       setSelectedOrder(null);
     } catch (error) {
@@ -85,6 +96,16 @@ const OrdersTable = () => {
     const newTotalAmount = newItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     
     try {
+      // Adjust stock inventory based on the difference
+      const oldItem = order.items[itemIndex];
+      const quantityDiff = oldItem.quantity - newQuantity; // Positive if returning stock, negative if taking more
+      
+      if (quantityDiff !== 0) {
+        await update(ref(db), {
+          [`products/${oldItem.id}/quantity`]: incrementFirebase(quantityDiff)
+        });
+      }
+
       await update(ref(db, `orders/${orderId}`), {
         items: newItems,
         totalItems: newTotalItems,
