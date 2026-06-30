@@ -21,8 +21,6 @@ const ProductCard = ({ product }) => {
         <img 
           src={product.image} 
           alt={product.name} 
-          loading="lazy"
-          decoding="async"
           className="w-full h-full object-cover transform-gpu transition-transform duration-700 ease-out group-hover:scale-105 z-10 will-change-transform"
         />
         
