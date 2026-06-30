@@ -44,12 +44,13 @@ const CheckoutPage = ({ onBack }) => {
 
     try {
       const deductionPromises = cartItems.map((item) => {
-        const productRef = ref(db, `products/${item.id}`);
-        return update(productRef, {
-          quantity: incrementFirebase(-item.quantity)
+        const quantityRef = ref(db, `products/${item.id}/quantity`);
+        // By using `set` on the exact `quantity` node, we satisfy the Firebase { "quantity": { ".write": true } } rule
+        // Alternatively, we can still use `update` but we must pass the path directly
+        return update(ref(db), {
+          [`products/${item.id}/quantity`]: incrementFirebase(-item.quantity)
         }).catch(err => {
-          console.warn("Stock deduction skipped (likely due to zero-stock rules):", err);
-          // Resolve gracefully so the order can still be placed as a backorder
+          console.warn("Stock deduction skipped (likely due to permission rules):", err);
           return null;
         });
       });
