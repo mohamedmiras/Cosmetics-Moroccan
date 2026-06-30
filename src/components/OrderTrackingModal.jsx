@@ -43,10 +43,15 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
         if (data) {
           const matchedOrders = Object.entries(data)
             .map(([id, order]) => ({ id, ...order }))
-            .filter(order => 
-              order.customerName?.trim().toLowerCase() === name.trim().toLowerCase() && 
-              order.phoneNumber?.trim() === phone.trim()
-            )
+            .filter(order => {
+              const safeDbName = (order.customerName || '').replace(/\s+/g, ' ').trim().toLowerCase();
+              const safeInputName = name.replace(/\s+/g, ' ').trim().toLowerCase();
+              
+              const safeDbPhone = (order.phoneNumber || '').replace(/\D/g, '');
+              const safeInputPhone = phone.replace(/\D/g, '');
+
+              return safeDbName === safeInputName && safeDbPhone === safeInputPhone;
+            })
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Newest first
 
           setMyOrders(matchedOrders);
@@ -199,7 +204,7 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
 
                           <div className="space-y-3">
                             {(order.items || []).map((item, idx) => {
-                              const productMatch = allProducts.find(p => p.name === item.name);
+                              const productMatch = allProducts.find(p => p.id === item.id || p.name === item.name);
                               return (
                                 <div key={idx} className="flex items-center gap-3">
                                   <div className="w-10 h-10 rounded-lg bg-[#F3ECE4] overflow-hidden shrink-0 flex items-center justify-center">
