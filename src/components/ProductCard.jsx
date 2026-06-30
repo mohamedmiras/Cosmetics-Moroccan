@@ -22,7 +22,7 @@ const ProductCard = ({ product }) => {
     >
       
       {/* Image Container - Premium Framed Image */}
-      <div className="relative w-full aspect-[4/3] bg-white p-4 pb-2 md:p-6 md:pb-2">
+      <div className="relative w-full aspect-[4/5] bg-white p-4 pb-2 md:p-6 md:pb-2">
         <div className="w-full h-full relative rounded-2xl overflow-hidden border-2 border-[#E8D8C8]/60 shadow-sm">
           <img 
             src={product.image} 
