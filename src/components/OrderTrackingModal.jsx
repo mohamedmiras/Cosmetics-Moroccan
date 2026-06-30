@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Package, Clock, CheckCircle2, Truck } from 'lucide-react';
-import { ref, onValue } from 'firebase/database';
+import { X, Search, Package, Clock, CheckCircle2, Truck, Plus, Minus, Edit2, Save, Trash2 } from 'lucide-react';
+import { ref, onValue, update, increment as incrementFirebase } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { allProducts } from '../data/products';
 
@@ -32,6 +32,11 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
   const [phone, setPhone] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [myOrders, setMyOrders] = useState(null);
+
+  // Edit State
+  const [editingOrderId, setEditingOrderId] = useState(null);
+  const [editedItems, setEditedItems] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     let unsubscribe;
@@ -75,6 +80,77 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     if (name.trim() && phone.trim()) {
       setIsSearching(true);
+    }
+  };
+
+  const startEditing = (order) => {
+    setEditingOrderId(order.id);
+    setEditedItems(JSON.parse(JSON.stringify(order.items || [])));
+  };
+
+  const cancelEditing = () => {
+    setEditingOrderId(null);
+    setEditedItems([]);
+  };
+
+  const handleUpdateQuantity = (itemId, delta) => {
+    setEditedItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return { ...item, quantity: Math.max(0, item.quantity + delta) };
+      }
+      return item;
+    }));
+  };
+
+  const handleSaveOrder = async (originalOrder) => {
+    setIsSaving(true);
+    try {
+      const originalItems = originalOrder.items || [];
+      const deductionPromises = [];
+
+      const newQtyMap = {};
+      editedItems.forEach(item => { newQtyMap[item.id] = item.quantity; });
+
+      const oldQtyMap = {};
+      originalItems.forEach(item => { oldQtyMap[item.id] = item.quantity; });
+
+      const allItemIds = new Set([...Object.keys(newQtyMap), ...Object.keys(oldQtyMap)]);
+
+      allItemIds.forEach(id => {
+        const oldQ = oldQtyMap[id] || 0;
+        const newQ = newQtyMap[id] || 0;
+        const diff = oldQ - newQ;
+
+        if (diff !== 0) {
+          deductionPromises.push(
+            update(ref(db, `products/${id}`), {
+              quantity: incrementFirebase(diff)
+            }).catch(err => console.warn("Stock sync skipped for", id, err))
+          );
+        }
+      });
+
+      await Promise.all(deductionPromises);
+
+      const finalItems = editedItems.filter(i => i.quantity > 0);
+      const newTotalItems = finalItems.reduce((sum, i) => sum + i.quantity, 0);
+      const newTotalAmount = finalItems.reduce((sum, i) => sum + (i.quantity * i.price), 0);
+
+      const status = newTotalItems === 0 ? 'Cancelled' : originalOrder.status;
+
+      await update(ref(db, `orders/${originalOrder.id}`), {
+        items: finalItems,
+        totalItems: newTotalItems,
+        totalAmount: newTotalAmount,
+        status: status
+      });
+
+      setEditingOrderId(null);
+    } catch (error) {
+      console.error("Failed to save order updates:", error);
+      alert("Error saving order updates.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -191,7 +267,14 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
                       </div>
 
                       {myOrders.map(order => (
-                        <div key={order.id} className="bg-white rounded-2xl p-6 border border-[#E8D8C8] shadow-sm">
+                        <div key={order.id} className={`bg-white rounded-2xl p-6 border ${order.status === 'Cancelled' ? 'border-red-200 opacity-75' : 'border-[#E8D8C8]'} shadow-sm relative overflow-hidden transition-all duration-300`}>
+                          {isSaving && editingOrderId === order.id && (
+                            <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center">
+                              <div className="w-6 h-6 border-2 border-[#731625] border-t-transparent rounded-full animate-spin mb-2"></div>
+                              <span className="text-xs font-medium text-[#3A2E2A]">Saving updates...</span>
+                            </div>
+                          )}
+                          
                           <div className="flex justify-between items-start mb-4 border-b border-[#E8D8C8]/50 pb-4">
                             <div>
                               <p className="text-xs text-[#6B4F4F] mb-1">
@@ -201,17 +284,29 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
                                 {getStatusIcon(order.status)} {order.status || 'Pending'}
                               </div>
                             </div>
-                            <div className="text-right">
-                              <span className="text-xl font-light text-[#3A2E2A] leading-none block">{order.totalAmount}</span>
-                              <span className="text-[10px] font-semibold text-[#9E3D3D] tracking-widest uppercase">MAD</span>
+                            <div className="text-right flex flex-col items-end gap-2">
+                              <div>
+                                <span className="text-xl font-light text-[#3A2E2A] leading-none block">{order.totalAmount}</span>
+                                <span className="text-[10px] font-semibold text-[#9E3D3D] tracking-widest uppercase">MAD</span>
+                              </div>
+                              {order.status === 'Pending' && editingOrderId !== order.id && (
+                                <button
+                                  onClick={() => startEditing(order)}
+                                  className="text-xs font-medium text-[#731625] flex items-center gap-1 hover:underline px-2 py-1 bg-[#F3ECE4] rounded-md transition-colors"
+                                >
+                                  <Edit2 size={12} /> Edit Order
+                                </button>
+                              )}
                             </div>
                           </div>
 
                           <div className="space-y-3">
-                            {(order.items || []).map((item, idx) => {
+                            {(editingOrderId === order.id ? editedItems : (order.items || [])).map((item, idx) => {
                               const productMatch = allProducts.find(p => p.id === item.id || p.name === item.name);
+                              const isDeleted = item.quantity === 0;
+                              
                               return (
-                                <div key={idx} className="flex items-center gap-3">
+                                <div key={idx} className={`flex items-center gap-3 transition-opacity ${isDeleted ? 'opacity-40' : 'opacity-100'}`}>
                                   <div className="w-10 h-10 rounded-lg bg-[#F3ECE4] overflow-hidden shrink-0 flex items-center justify-center">
                                     {productMatch?.image ? (
                                       <img src={productMatch.image} alt={item.name} className="w-full h-full object-cover" />
@@ -220,13 +315,61 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
                                     )}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-[#3A2E2A] truncate">{item.name}</p>
-                                    <p className="text-xs text-[#6B4F4F]">Qty: {item.quantity}</p>
+                                    <p className={`text-sm font-medium text-[#3A2E2A] truncate ${isDeleted ? 'line-through text-[#6B4F4F]' : ''}`}>{item.name}</p>
+                                    {!editingOrderId || editingOrderId !== order.id ? (
+                                      <p className="text-xs text-[#6B4F4F]">Qty: {item.quantity}</p>
+                                    ) : (
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <button 
+                                          onClick={() => handleUpdateQuantity(item.id, -1)}
+                                          className="w-5 h-5 rounded-md bg-[#F3ECE4] flex items-center justify-center text-[#6B4F4F] hover:bg-[#E8D8C8] transition-colors"
+                                        >
+                                          <Minus size={12} />
+                                        </button>
+                                        <span className="text-xs font-medium w-3 text-center">{item.quantity}</span>
+                                        <button 
+                                          onClick={() => handleUpdateQuantity(item.id, 1)}
+                                          className="w-5 h-5 rounded-md bg-[#F3ECE4] flex items-center justify-center text-[#6B4F4F] hover:bg-[#E8D8C8] transition-colors"
+                                        >
+                                          <Plus size={12} />
+                                        </button>
+                                        
+                                        <button 
+                                          onClick={() => handleUpdateQuantity(item.id, -item.quantity)}
+                                          className="ml-auto text-[#9E3D3D] hover:bg-red-50 p-1 rounded transition-colors"
+                                          title="Remove Item"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    <p className={`text-sm font-medium text-[#3A2E2A] ${isDeleted ? 'line-through text-[#6B4F4F]' : ''}`}>{item.price * item.quantity} MAD</p>
                                   </div>
                                 </div>
                               );
                             })}
                           </div>
+
+                          {editingOrderId === order.id && (
+                            <div className="mt-5 pt-4 border-t border-[#E8D8C8]/50 flex gap-3">
+                              <button
+                                onClick={cancelEditing}
+                                disabled={isSaving}
+                                className="flex-1 py-2 text-sm font-medium text-[#6B4F4F] bg-[#F3ECE4] hover:bg-[#E8D8C8] rounded-xl transition-colors disabled:opacity-50"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleSaveOrder(order)}
+                                disabled={isSaving}
+                                className="flex-1 py-2 text-sm font-medium text-white bg-[#731625] hover:bg-[#5a111d] rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                              >
+                                <Save size={14} /> Save Changes
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
