@@ -46,12 +46,14 @@ const CheckoutPage = ({ onBack }) => {
       const deductionPromises = cartItems.map((item) => {
         const productRef = ref(db, `products/${item.id}`);
         return runTransaction(productRef, (currentData) => {
+          if (currentData === null) {
+            return currentData; // Let Firebase fetch the real data
+          }
           if (currentData) {
-            // Allow stock to go negative so admin can track backorder debt
             currentData.quantity -= item.quantity;
             return currentData;
           }
-          return currentData;
+          return; // Abort if something goes wrong
         });
       });
       
@@ -76,6 +78,7 @@ const CheckoutPage = ({ onBack }) => {
       await push(ref(db, 'orders'), orderData);
       
       // ONLY show success after the database has actually saved the order
+      clearCart();
       setOrderSuccess(true);
     } catch (error) {
       console.error('Checkout processing failed:', error);

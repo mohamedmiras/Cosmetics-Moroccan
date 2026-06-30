@@ -62,9 +62,13 @@ export const CartProvider = ({ children }) => {
     return sum + (item.quantity * currentPrice);
   }, 0);
 
+  const clearCart = () => {
+    setCart({});
+  };
+
   // Expose catalog so components can render progress bars and live prices
   return (
-    <CartContext.Provider value={{ cart, increment, decrement, getQuantity, totalItems, totalPrice, catalog }}>
+    <CartContext.Provider value={{ cart, increment, decrement, getQuantity, totalItems, totalPrice, catalog, clearCart }}>
       {children}
     </CartContext.Provider>
   );
