@@ -23,9 +23,9 @@ export const CartProvider = ({ children }) => {
     setCart(prev => {
       const currentQty = prev[id]?.quantity || 0;
       
-      // Prevent incrementing beyond available quantity in catalog
-      const available = catalog[id]?.quantity ?? 999;
-      if (currentQty >= available) return prev;
+      // Allow backorders up to a maximum limit per order
+      const maxQty = 50;
+      if (currentQty >= maxQty) return prev;
 
       return {
         ...prev,

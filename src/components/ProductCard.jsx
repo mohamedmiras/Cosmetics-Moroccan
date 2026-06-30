@@ -91,8 +91,12 @@ const ProductCard = ({ product }) => {
           transition={{ duration: 0.3, delay: 0.06 }}
           className="flex justify-between items-center text-[10px] uppercase tracking-widest text-[#8c7a6b] font-medium mb-6"
         >
-          <span>{isOutOfStock ? 'Sold Out' : 'Available Stock'}</span>
-          {!isOutOfStock && <span className="text-[#731625]">{availableQty} Units</span>}
+          <span>{isOutOfStock ? 'Stock Status' : 'Available Stock'}</span>
+          {isOutOfStock ? (
+            <span className="text-red-500 font-bold">OUT OF STOCK</span>
+          ) : (
+            <span className="text-[#731625]">{availableQty} Units</span>
+          )}
         </motion.div>
 
         {/* 3 Features Block */}
@@ -147,7 +151,7 @@ const ProductCard = ({ product }) => {
               <button 
                 onClick={() => increment(product.id, livePrice, product.name)}
                 className="text-[#8c7a6b] hover:text-[#2d1f1f] w-8 h-10 flex items-center justify-center disabled:opacity-30 transition-colors"
-                disabled={isOutOfStock || count >= availableQty}
+                disabled={count >= 50}
               >
                 +
               </button>
@@ -156,10 +160,9 @@ const ProductCard = ({ product }) => {
             {/* Add to Cart Button */}
             <button 
               onClick={() => increment(product.id, livePrice, product.name)}
-              disabled={isOutOfStock || count >= availableQty}
               className="flex-1 flex items-center justify-center gap-2 bg-[#731625] text-white py-4 rounded-full font-light tracking-wide hover:bg-[#5a111d] transition-colors disabled:bg-gray-300 group"
             >
-              <span className="text-sm">Add to Cart</span>
+              <span className="text-sm">{isOutOfStock ? (count > 0 ? 'Add More' : 'Order Now') : (count > 0 ? 'Add More' : 'Add to Cart')}</span>
               <svg className="w-4 h-4 opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
