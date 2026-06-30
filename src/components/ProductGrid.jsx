@@ -4,6 +4,31 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const ProductGrid = ({ products }) => {
   const scrollRef = useRef(null);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftPos = useRef(0);
+
+  const onMouseDown = (e) => {
+    isDragging.current = true;
+    startX.current = e.pageX - scrollRef.current.offsetLeft;
+    scrollLeftPos.current = scrollRef.current.scrollLeft;
+  };
+
+  const onMouseLeave = () => {
+    isDragging.current = false;
+  };
+
+  const onMouseUp = () => {
+    isDragging.current = false;
+  };
+
+  const onMouseMove = (e) => {
+    if (!isDragging.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX.current) * 2; // Scroll-fast multiplier
+    scrollRef.current.scrollLeft = scrollLeftPos.current - walk;
+  };
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -55,7 +80,11 @@ const ProductGrid = ({ products }) => {
         
         <div 
           ref={scrollRef}
-          className="flex gap-4 md:gap-8 overflow-x-auto scrollbar-hide px-4 md:px-[5vw] pb-12 pt-8 will-change-scroll"
+          onMouseDown={onMouseDown}
+          onMouseLeave={onMouseLeave}
+          onMouseUp={onMouseUp}
+          onMouseMove={onMouseMove}
+          className="flex gap-4 md:gap-8 overflow-x-auto scrollbar-hide px-4 md:px-[5vw] pb-12 pt-8 will-change-scroll cursor-grab active:cursor-grabbing"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {products.map((product) => (

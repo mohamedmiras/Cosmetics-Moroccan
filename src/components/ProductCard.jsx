@@ -27,7 +27,8 @@ const ProductCard = ({ product }) => {
           <img 
             src={product.image} 
             alt={product.name} 
-            className="w-full h-full object-cover transform-gpu transition-transform duration-700 ease-out group-hover:scale-105 z-10 will-change-transform"
+            draggable="false"
+            className="w-full h-full object-cover transform-gpu transition-transform duration-700 ease-out group-hover:scale-105 z-10 will-change-transform select-none"
           />
           
           {/* Subtle Inner Ring */}
