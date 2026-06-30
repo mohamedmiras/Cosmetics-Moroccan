@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Package, Clock, CheckCircle2, Truck, Plus, Minus, Edit2, Save, Trash2 } from 'lucide-react';
-import { ref, onValue, update, increment as incrementFirebase } from 'firebase/database';
+import { X, Search, Package, Clock, CheckCircle2, Truck } from 'lucide-react';
+import { ref, get } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { allProducts } from '../data/products';
 
@@ -28,47 +28,123 @@ const getStatusIcon = (status) => {
 };
 
 const OrderTrackingModal = ({ isOpen, onClose }) => {
-  const [searchOrderId, setSearchOrderId] = useState('');
+  const [orderId, setOrderId] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [myOrders, setMyOrders] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    let unsubscribe;
-
-    if (isSearching && searchOrderId) {
-      const orderRef = ref(db, `orders/${searchOrderId.trim()}`);
-      unsubscribe = onValue(orderRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          // Wrap the single order in an array so the rest of the component still works
-          setMyOrders([{ id: searchOrderId.trim(), ...data }]);
-        } else {
-          setMyOrders([]); // Invalid ID / not found
+    const fetchOrder = async () => {
+      if (isSearching && orderId.trim()) {
+        const cleanId = orderId.trim();
+        try {
+          const orderRef = ref(db, `orders/${cleanId}`);
+          const snapshot = await get(orderRef);
+          
+          if (snapshot.exists()) {
+            setMyOrders([{ id: cleanId, ...snapshot.val() }]);
+            setErrorMsg('');
+          } else {
+            setMyOrders([]);
+            setErrorMsg('Invalid ID');
+          }
+        } catch (error) {
+          console.error("Failed to fetch order:", error);
+          setMyOrders(null);
+          setIsSearching(false);
+          alert("Could not connect to the database. Please check permissions.");
         }
-      }, (error) => {
-        console.error("Failed to fetch order:", error);
-        setMyOrders(null); 
-        setIsSearching(false); 
-        alert("Permission Denied: Could not read this order ID. Make sure it is exactly correct.");
-      });
-    }
-
-    return () => {
-      if (unsubscribe) unsubscribe();
+      }
     };
-  }, [isSearching, searchOrderId]);
+
+    fetchOrder();
+  }, [isSearching, orderId]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchOrderId.trim()) {
+    if (orderId.trim()) {
       setIsSearching(true);
+    }
+  };
+
+  const startEditing = (order) => {
+    setEditingOrderId(order.id);
+    setEditedItems(JSON.parse(JSON.stringify(order.items || [])));
+  };
+
+  const cancelEditing = () => {
+    setEditingOrderId(null);
+    setEditedItems([]);
+  };
+
+  const handleUpdateQuantity = (itemId, delta) => {
+    setEditedItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const newQty = item.quantity + delta;
+        // Enforce boundaries: min 0, max 50
+        return { ...item, quantity: Math.min(50, Math.max(0, newQty)) };
+      }
+      return item;
+    }));
+  };
+
+  const handleSaveOrder = async (originalOrder) => {
+    setIsSaving(true);
+    try {
+      const originalItems = originalOrder.items || [];
+      const deductionPromises = [];
+
+      const newQtyMap = {};
+      editedItems.forEach(item => { newQtyMap[item.id] = item.quantity; });
+
+      const oldQtyMap = {};
+      originalItems.forEach(item => { oldQtyMap[item.id] = item.quantity; });
+
+      const allItemIds = new Set([...Object.keys(newQtyMap), ...Object.keys(oldQtyMap)]);
+
+      allItemIds.forEach(id => {
+        const oldQ = oldQtyMap[id] || 0;
+        const newQ = newQtyMap[id] || 0;
+        const diff = oldQ - newQ;
+
+        if (diff !== 0) {
+          deductionPromises.push(
+            update(ref(db, `products/${id}`), {
+              quantity: incrementFirebase(diff)
+            }).catch(err => console.warn("Stock sync skipped for", id, err))
+          );
+        }
+      });
+
+      await Promise.all(deductionPromises);
+
+      const finalItems = editedItems.filter(i => i.quantity > 0);
+      const newTotalItems = finalItems.reduce((sum, i) => sum + i.quantity, 0);
+      const newTotalAmount = finalItems.reduce((sum, i) => sum + (i.quantity * i.price), 0);
+
+      const status = newTotalItems === 0 ? 'Cancelled' : originalOrder.status;
+
+      await update(ref(db, `orders/${originalOrder.id}`), {
+        items: finalItems,
+        totalItems: newTotalItems,
+        totalAmount: newTotalAmount,
+        status: status
+      });
+
+      setEditingOrderId(null);
+    } catch (error) {
+      console.error("Failed to save order updates:", error);
+      alert("Error saving order updates.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleLogout = () => {
     setIsSearching(false);
     setMyOrders(null);
-    setSearchOrderId('');
+    setName('');
+    setPhone('');
   };
 
   // Prevent background scrolling
@@ -119,17 +195,17 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
               {!isSearching ? (
                 <form onSubmit={handleSearch} className="space-y-6">
                   <p className="text-[#6B4F4F] font-light mb-8">
-                    Enter the exact Order ID you received after checkout to view your live order status.
+                    Enter your secure Order ID to view your live order status.
                   </p>
                   
                   <div>
                     <label className="block text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold mb-2">Order ID</label>
                     <input 
                       type="text" 
-                      value={searchOrderId}
-                      onChange={e => setSearchOrderId(e.target.value)}
+                      value={orderId}
+                      onChange={e => setOrderId(e.target.value)}
                       required
-                      placeholder="e.g. -OaB1xY..."
+                      placeholder="e.g. -NzVb..."
                       className="w-full p-4 rounded-xl border border-[#E8D8C8] bg-white text-[#3A2E2A] placeholder-[#6B4F4F]/40 focus:outline-none focus:border-[#9E3D3D] transition-colors font-mono text-sm"
                     />
                   </div>
@@ -138,7 +214,7 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
                     type="submit"
                     className="w-full py-4 mt-4 bg-[#731625] text-white rounded-xl font-light tracking-wide hover:bg-[#5a111d] transition-colors flex items-center justify-center gap-2"
                   >
-                    <Search size={18} /> Find My Orders
+                    <Search size={18} /> Find My Order
                   </button>
                 </form>
               ) : (
@@ -165,8 +241,7 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
                       </div>
 
                       {myOrders.map(order => (
-                        <div key={order.id} className={`bg-white rounded-2xl p-6 border ${order.status === 'Cancelled' ? 'border-red-200 opacity-75' : 'border-[#E8D8C8]'} shadow-sm relative overflow-hidden transition-all duration-300`}>
-                          
+                        <div key={order.id} className="bg-white rounded-2xl p-6 border border-[#E8D8C8] shadow-sm relative overflow-hidden transition-all duration-300">
                           <div className="flex justify-between items-start mb-4 border-b border-[#E8D8C8]/50 pb-4">
                             <div>
                               <p className="text-xs text-[#6B4F4F] mb-1">
@@ -187,10 +262,9 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
                           <div className="space-y-3">
                             {(order.items || []).map((item, idx) => {
                               const productMatch = allProducts.find(p => p.id === item.id || p.name === item.name);
-                              const isDeleted = item.quantity === 0;
                               
                               return (
-                                <div key={idx} className={`flex items-center gap-3 transition-opacity ${isDeleted ? 'opacity-40' : 'opacity-100'}`}>
+                                <div key={idx} className="flex items-center gap-3">
                                   <div className="w-10 h-10 rounded-lg bg-[#F3ECE4] overflow-hidden shrink-0 flex items-center justify-center">
                                     {productMatch?.image ? (
                                       <img src={productMatch.image} alt={item.name} className="w-full h-full object-cover" />
@@ -199,11 +273,11 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
                                     )}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-medium text-[#3A2E2A] truncate ${isDeleted ? 'line-through text-[#6B4F4F]' : ''}`}>{item.name}</p>
+                                    <p className="text-sm font-medium text-[#3A2E2A] truncate">{item.name}</p>
                                     <p className="text-xs text-[#6B4F4F]">Qty: {item.quantity}</p>
                                   </div>
                                   <div className="text-right shrink-0">
-                                    <p className={`text-sm font-medium text-[#3A2E2A] ${isDeleted ? 'line-through text-[#6B4F4F]' : ''}`}>{item.price * item.quantity} MAD</p>
+                                    <p className="text-sm font-medium text-[#3A2E2A]">{item.price * item.quantity} MAD</p>
                                   </div>
                                 </div>
                               );
