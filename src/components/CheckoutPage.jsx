@@ -12,7 +12,7 @@ const pageVariants = {
 };
 
 const CheckoutPage = ({ onBack }) => {
-  const { cart, totalItems, totalPrice, catalog } = useCart();
+  const { cart, totalItems, totalPrice, catalog, clearCart } = useCart();
   const cartItems = Object.entries(cart).map(([id, item]) => ({ id, ...item }));
   
   const hasOutOfStockItems = cartItems.some(item => {
