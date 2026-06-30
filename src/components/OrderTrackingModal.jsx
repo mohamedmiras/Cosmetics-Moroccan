@@ -58,6 +58,11 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
         } else {
           setMyOrders([]);
         }
+      }, (error) => {
+        console.error("Failed to fetch orders:", error);
+        setMyOrders(null); // Reset
+        setIsSearching(false); // Stop loading
+        alert("Could not connect to the database to find orders. Please check database permissions.");
       });
     }
 
