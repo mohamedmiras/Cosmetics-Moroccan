@@ -13,16 +13,26 @@ const ProductCard = ({ product }) => {
   const isOutOfStock = availableQty <= 0;
 
   return (
-    <div className="w-full flex flex-col group relative bg-[#FAF6F2] rounded-3xl border border-[#E8D8C8]/60 overflow-hidden transition-shadow duration-700 hover:shadow-[0_20px_60px_rgba(45,31,31,0.08)] flex-shrink-0 md:w-[450px] transform-gpu">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="w-full flex flex-col group relative bg-[#FAF6F2] rounded-3xl border border-[#E8D8C8]/60 overflow-hidden transition-shadow duration-700 hover:shadow-[0_20px_60px_rgba(45,31,31,0.08)] flex-shrink-0 md:w-[450px] transform-gpu"
+    >
       
-      {/* Image Container - Premium Full-Bleed Image */}
-      <div className="relative w-full aspect-[4/3] overflow-hidden bg-[#F3ECE4]">
-        
-        <img 
-          src={product.image} 
-          alt={product.name} 
-          className="w-full h-full object-cover transform-gpu transition-transform duration-700 ease-out group-hover:scale-105 z-10 will-change-transform"
-        />
+      {/* Image Container - Premium Framed Image */}
+      <div className="relative w-full aspect-[4/3] bg-[#FAF6F2] p-4 pb-8">
+        <div className="w-full h-full relative rounded-2xl overflow-hidden border-2 border-[#E8D8C8]/60 shadow-sm">
+          <img 
+            src={product.image} 
+            alt={product.name} 
+            className="w-full h-full object-cover transform-gpu transition-transform duration-700 ease-out group-hover:scale-105 z-10 will-change-transform"
+          />
+          
+          {/* Subtle Inner Ring */}
+          <div className="absolute inset-0 border border-white/40 rounded-2xl pointer-events-none z-20 mix-blend-overlay"></div>
+        </div>
         
         {/* Decorative Badge (e.g., 100% Natural) */}
         <div className="absolute right-6 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full border border-[#8c7a6b]/30 flex flex-col items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 mix-blend-multiply">
@@ -164,7 +174,7 @@ const ProductCard = ({ product }) => {
         </div>
 
       </div>
-    </div>
+    </motion.div>
   );
 };
 
