@@ -300,8 +300,6 @@ const OrdersTable = () => {
             <span className="hidden sm:inline">Export CSV</span>
           </button>
         </div>
-      </div>
-
       {/* ── MOBILE: Card List ── */}
       <div className="md:hidden space-y-3">
         {loading ? (
