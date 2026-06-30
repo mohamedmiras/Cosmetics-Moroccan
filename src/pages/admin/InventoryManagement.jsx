@@ -200,25 +200,32 @@ const InventoryManagement = () => {
                   </div>
 
                   <div>
-                    <label className="text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold mb-2 flex justify-between">
-                      <span>Available Stock</span>
-                      <span className={displayQty <= 5 ? "text-[#9E3D3D]" : ""}>{displayQty} units</span>
-                    </label>
+                    <div className="flex justify-between items-end mb-2">
+                      <label className="text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold flex flex-col gap-1">
+                        <span>Available Stock</span>
+                        <span className="text-xs font-bold text-[#3A2E2A] lowercase tracking-normal">
+                          value: {displayQty * displayPrice} MAD
+                        </span>
+                      </label>
+                      <span className={displayQty <= 5 ? "text-[#9E3D3D] text-[10px] uppercase font-semibold" : "text-[10px] uppercase font-semibold"}>{displayQty} units</span>
+                    </div>
                     <input 
                       type="number"
-                      min="0"
                       value={displayQty}
                       onChange={(e) => handleEdit(key, 'quantity', e.target.value)}
                       className="w-full bg-[#F3ECE4]/50 border border-[#E8D8C8] rounded-xl px-4 py-2.5 text-[#3A2E2A] focus:outline-none focus:border-[#9E3D3D] transition-colors mb-2"
                     />
                     
-                    {/* Visual Bar inside admin */}
+                    {/* Visual Bar inside admin - clamp to 0 for display */}
                     <div className="h-1.5 w-full bg-[#E8D8C8]/40 rounded-full overflow-hidden">
                       <div 
-                        className={`h-full rounded-full transition-all duration-500 ${pct <= 20 ? 'bg-[#9E3D3D]' : 'bg-[#6B4F4F]'}`} 
-                        style={{ width: `${pct}%` }} 
+                        className={`h-full rounded-full transition-all duration-500 ${displayQty < 0 ? 'bg-red-500' : pct <= 20 ? 'bg-[#9E3D3D]' : 'bg-[#6B4F4F]'}`} 
+                        style={{ width: displayQty < 0 ? '100%' : `${pct}%` }} 
                       />
                     </div>
+                    {displayQty < 0 && (
+                      <p className="text-xs text-red-600 font-semibold mt-1">⚠ Oversold by {Math.abs(displayQty)} unit{Math.abs(displayQty) !== 1 ? 's' : ''}</p>
+                    )}
                   </div>
                 </div>
 

@@ -91,8 +91,10 @@ const ProductCard = ({ product }) => {
           transition={{ duration: 0.3, delay: 0.06 }}
           className="flex justify-between items-center text-[10px] uppercase tracking-widest text-[#8c7a6b] font-medium mb-6"
         >
-          <span>{isOutOfStock ? 'Stock Status' : 'Available Stock'}</span>
-          {isOutOfStock ? (
+          <span>{availableQty < 0 ? 'Oversold Stock' : isOutOfStock ? 'Stock Status' : 'Available Stock'}</span>
+          {availableQty < 0 ? (
+            <span className="text-red-500 font-bold">{availableQty} Units</span>
+          ) : isOutOfStock ? (
             <span className="text-red-500 font-bold">OUT OF STOCK</span>
           ) : (
             <span className="text-[#731625]">{availableQty} Units</span>
