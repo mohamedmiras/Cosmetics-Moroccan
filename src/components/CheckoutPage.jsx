@@ -49,12 +49,12 @@ const CheckoutPage = ({ onBack }) => {
       const deductionPromises = cartItems.map((item) => {
         const productRef = ref(db, `products/${item.id}`);
         return runTransaction(productRef, (currentData) => {
-          if (currentData && currentData.quantity >= item.quantity) {
+          if (currentData) {
+            // Allow stock to go negative so admin can track backorder debt
             currentData.quantity -= item.quantity;
             return currentData;
           }
-          console.warn(`Insufficient stock for ${item.name}`);
-          return;
+          return currentData;
         });
       });
       
