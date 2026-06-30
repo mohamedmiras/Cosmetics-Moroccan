@@ -75,7 +75,7 @@ const CheckoutPage = ({ onBack }) => {
       setOrderSuccess(true);
     } catch (error) {
       console.error('Checkout processing failed:', error);
-      alert("There was an error processing your order. Please try again.");
+      alert("Checkout Error: " + (error.message || JSON.stringify(error)));
     } finally {
       setIsProcessing(false);
     }
