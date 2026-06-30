@@ -296,6 +296,12 @@ const OrdersTable = () => {
                   <p className="text-[#6B4F4F] text-sm mt-2">
                     Ordered on: {selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleString() : 'N/A'}
                   </p>
+                  <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E8D8C8]/40 border border-[#E8D8C8] rounded-md">
+                    <span className="text-[10px] tracking-[0.1em] uppercase text-[#6B4F4F] font-semibold">Payment:</span>
+                    <span className="text-xs font-semibold text-[#731625]">
+                      {selectedOrder.paymentMethod === 'card' ? 'Credit Card' : 'Cash on Delivery'}
+                    </span>
+                  </div>
                 </div>
 
                 <div>
