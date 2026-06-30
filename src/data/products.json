@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "name": "Velvet Rose Radiance Cream",
+    "description": "An ultra-hydrating, luxurious cream infused with rare rose extracts that melts into the skin for a luminous, youthful glow.",
+    "category": "Skincare",
+    "price": 185.00,
+    "discountPrice": null,
+    "rating": 4.9,
+    "stockStatus": "In Stock",
+    "variants": ["50ml", "100ml"],
+    "image": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    "id": 2,
+    "name": "Lumière Liquid Gold Serum",
+    "description": "A concentrated anti-aging serum packed with 24k gold flakes and active peptides to restore firmness and elasticity.",
+    "category": "Serums",
+    "price": 240.00,
+    "discountPrice": 210.00,
+    "rating": 4.8,
+    "stockStatus": "Low Stock",
+    "variants": ["30ml"],
+    "image": "https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    "id": 3,
+    "name": "Noir Silk Eye Elixir",
+    "description": "Revitalize your under-eye area with this cooling, silk-infused elixir designed to banish dark circles and fine lines.",
+    "category": "Eye Care",
+    "price": 125.00,
+    "discountPrice": null,
+    "rating": 4.7,
+    "stockStatus": "In Stock",
+    "variants": ["15ml"],
+    "image": "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    "id": 4,
+    "name": "Obsidian Detoxifying Mask",
+    "description": "A deeply purifying clay mask formulated with volcanic ash and active botanicals for a flawless, clear complexion.",
+    "category": "Masks",
+    "price": 95.00,
+    "discountPrice": null,
+    "rating": 4.6,
+    "stockStatus": "Out of Stock",
+    "variants": ["100g"],
+    "image": "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&q=80&w=800"
+  }
+]
