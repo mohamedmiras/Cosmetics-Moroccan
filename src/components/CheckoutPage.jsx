@@ -60,11 +60,16 @@ const CheckoutPage = ({ onBack }) => {
       
       await Promise.all(deductionPromises);
 
+      const finalizedItems = cartItems.map(item => ({
+        ...item,
+        price: catalog[item.id]?.price ?? item.price
+      }));
+
       const orderData = {
         customerName: name,
         phoneNumber: phone,
         paymentMethod,
-        items: cartItems,
+        items: finalizedItems,
         totalItems,
         totalAmount: totalPrice,
         status: 'Pending',
@@ -208,20 +213,23 @@ const CheckoutPage = ({ onBack }) => {
                   )}
 
                   <div className="space-y-6">
-                    {cartItems.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center group">
-                        <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 bg-[#FAF6F2] rounded-2xl flex items-center justify-center overflow-hidden border border-[#E8D8C8]/50">
-                             <span className="text-sm font-medium text-[#8c7a6b]">{item.quantity}x</span>
+                    {cartItems.map((item, idx) => {
+                      const currentPrice = catalog[item.id]?.price ?? item.price;
+                      return (
+                        <div key={idx} className="flex justify-between items-center group">
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 bg-[#FAF6F2] rounded-2xl flex items-center justify-center overflow-hidden border border-[#E8D8C8]/50">
+                               <span className="text-sm font-medium text-[#8c7a6b]">{item.quantity}x</span>
+                            </div>
+                            <div>
+                              <h3 className="text-[#2d1f1f] font-medium text-base mb-1">{item.name}</h3>
+                              <p className="text-[#8c7a6b] text-[10px] uppercase tracking-widest">{currentPrice} MAD</p>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="text-[#2d1f1f] font-medium text-base mb-1">{item.name}</h3>
-                            <p className="text-[#8c7a6b] text-[10px] uppercase tracking-widest">{item.price} MAD</p>
-                          </div>
+                          <span className="text-lg text-[#2d1f1f] font-light">{currentPrice * item.quantity} MAD</span>
                         </div>
-                        <span className="text-lg text-[#2d1f1f] font-light">{item.price * item.quantity} MAD</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                     
                     {cartItems.length === 0 && (
                       <p className="text-[#8c7a6b] text-center py-8 font-light">Your cart is empty.</p>

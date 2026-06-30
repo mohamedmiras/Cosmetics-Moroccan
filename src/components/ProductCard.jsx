@@ -8,7 +8,7 @@ const ProductCard = ({ product }) => {
   
   const count = getQuantity(product.id);
   const catalogItem = catalog[product.id] || { quantity: 50, maxQuantity: 50 };
-  const livePrice = product.price; // Strictly use the local price (6 MAD)
+  const livePrice = catalogItem.price ?? product.price; // Use live DB price
   const availableQty = catalogItem.quantity ?? 50;
   const isOutOfStock = availableQty <= 0;
 

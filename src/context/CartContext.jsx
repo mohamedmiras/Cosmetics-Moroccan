@@ -56,9 +56,10 @@ export const CartProvider = ({ children }) => {
 
   const totalItems = Object.values(cart).reduce((sum, item) => sum + item.quantity, 0);
   
-  // Calculate total price strictly using the cart item price (which we set to 6)
+  // Calculate total price using live catalog prices, falling back to the snapshotted price
   const totalPrice = Object.entries(cart).reduce((sum, [id, item]) => {
-    return sum + (item.quantity * item.price);
+    const currentPrice = catalog[id]?.price ?? item.price;
+    return sum + (item.quantity * currentPrice);
   }, 0);
 
   // Expose catalog so components can render progress bars and live prices
