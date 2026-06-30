@@ -127,6 +127,9 @@ const ProductsAnalytics = () => {
                   <div className="text-right hidden sm:block">
                     <p className="text-[10px] uppercase tracking-widest text-[#6B4F4F]/60 mb-0.5">Revenue</p>
                     <p className="text-base font-light text-[#3A2E2A]">{data.totalRevenue} MAD</p>
+                    {data.totalQty > 0 && (
+                      <p className="text-[10px] text-[#6B4F4F]/60 mt-0.5">{(data.totalRevenue / data.totalQty).toFixed(0)} MAD / unit</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 text-[#6B4F4F]/60">
                     <Users size={14} />
