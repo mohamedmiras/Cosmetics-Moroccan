@@ -27,7 +27,6 @@ const CheckoutPage = ({ onBack }) => {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
-  const [generatedOrderId, setGeneratedOrderId] = useState('');
 
   const handleNextStep = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -76,7 +75,6 @@ const CheckoutPage = ({ onBack }) => {
       const newOrderRef = await push(ref(db, 'orders'), orderData);
       
       // ONLY show success after the database has actually saved the order
-      setGeneratedOrderId(newOrderRef.key);
       clearCart();
       setOrderSuccess(true);
     } catch (error) {
@@ -122,21 +120,10 @@ const CheckoutPage = ({ onBack }) => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
-            className="text-[#5a443f] text-base md:text-lg font-light mb-6 leading-relaxed"
+            className="text-[#5a443f] text-base md:text-lg font-light mb-10 leading-relaxed"
           >
             Thank you, <span className="font-medium text-[#2d1f1f]">{name}</span>. Your luxury items are being beautifully prepared for you.
           </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55, duration: 0.6, ease: "easeOut" }}
-            className="bg-white px-6 py-4 rounded-2xl border border-[#E8D8C8] mb-10 w-full"
-          >
-            <p className="text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold mb-1">Your Secure Order ID</p>
-            <p className="font-mono text-lg font-medium text-[#3A2E2A] select-all tracking-wider">{generatedOrderId}</p>
-            <p className="text-xs text-[#6B4F4F] mt-2 italic">Please save this ID to track your order</p>
-          </motion.div>
 
           <motion.button 
             initial={{ opacity: 0, y: 15 }}

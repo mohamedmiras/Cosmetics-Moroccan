@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Search, Package, Clock, CheckCircle2, Truck } from 'lucide-react';
-import { ref, get } from 'firebase/database';
+import { ref, onValue } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { allProducts } from '../data/products';
 
@@ -12,6 +12,7 @@ const getStatusColor = (status) => {
     case 'Completed': return 'bg-green-100 text-green-800 border-green-200';
     case 'Delivered': return 'bg-purple-100 text-purple-800 border-purple-200';
     case 'Delivered - Payment Pending': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'Cancelled': return 'bg-red-100 text-red-800 border-red-200';
     default: return 'bg-gray-100 text-gray-800 border-gray-200';
   }
 };
@@ -23,120 +24,59 @@ const getStatusIcon = (status) => {
     case 'Completed': return <CheckCircle2 size={16} />;
     case 'Delivered': return <Truck size={16} />;
     case 'Delivered - Payment Pending': return <Truck size={16} />;
+    case 'Cancelled': return <X size={16} />;
     default: return <Clock size={16} />;
   }
 };
 
 const OrderTrackingModal = ({ isOpen, onClose }) => {
-  const [orderId, setOrderId] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [myOrders, setMyOrders] = useState(null);
-  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      if (isSearching && orderId.trim()) {
-        const cleanId = orderId.trim();
-        try {
-          const orderRef = ref(db, `orders/${cleanId}`);
-          const snapshot = await get(orderRef);
-          
-          if (snapshot.exists()) {
-            setMyOrders([{ id: cleanId, ...snapshot.val() }]);
-            setErrorMsg('');
-          } else {
-            setMyOrders([]);
-            setErrorMsg('Invalid ID');
-          }
-        } catch (error) {
-          console.error("Failed to fetch order:", error);
-          setMyOrders(null);
-          setIsSearching(false);
-          alert("Could not connect to the database. Please check permissions.");
-        }
-      }
-    };
+    let unsubscribe;
 
-    fetchOrder();
-  }, [isSearching, orderId]);
+    if (isSearching && name && phone) {
+      const ordersRef = ref(db, 'orders');
+      unsubscribe = onValue(ordersRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const matchedOrders = Object.entries(data)
+            .map(([id, order]) => ({ id, ...order }))
+            .filter(order => {
+              const safeDbName = (order.customerName || '').replace(/\s+/g, ' ').trim().toLowerCase();
+              const safeInputName = name.replace(/\s+/g, ' ').trim().toLowerCase();
+              
+              const safeDbPhone = (order.phoneNumber || '').replace(/\D/g, '');
+              const safeInputPhone = phone.replace(/\D/g, '');
+
+              return safeDbName === safeInputName && safeDbPhone === safeInputPhone;
+            })
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Newest first
+
+          setMyOrders(matchedOrders);
+        } else {
+          setMyOrders([]);
+        }
+      }, (error) => {
+        console.error("Failed to fetch orders:", error);
+        setMyOrders(null); // Reset
+        setIsSearching(false); // Stop loading
+        alert("Could not connect to the database to find orders. Please check database permissions.");
+      });
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [isSearching, name, phone]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (orderId.trim()) {
+    if (name.trim() && phone.trim()) {
       setIsSearching(true);
-    }
-  };
-
-  const startEditing = (order) => {
-    setEditingOrderId(order.id);
-    setEditedItems(JSON.parse(JSON.stringify(order.items || [])));
-  };
-
-  const cancelEditing = () => {
-    setEditingOrderId(null);
-    setEditedItems([]);
-  };
-
-  const handleUpdateQuantity = (itemId, delta) => {
-    setEditedItems(prev => prev.map(item => {
-      if (item.id === itemId) {
-        const newQty = item.quantity + delta;
-        // Enforce boundaries: min 0, max 50
-        return { ...item, quantity: Math.min(50, Math.max(0, newQty)) };
-      }
-      return item;
-    }));
-  };
-
-  const handleSaveOrder = async (originalOrder) => {
-    setIsSaving(true);
-    try {
-      const originalItems = originalOrder.items || [];
-      const deductionPromises = [];
-
-      const newQtyMap = {};
-      editedItems.forEach(item => { newQtyMap[item.id] = item.quantity; });
-
-      const oldQtyMap = {};
-      originalItems.forEach(item => { oldQtyMap[item.id] = item.quantity; });
-
-      const allItemIds = new Set([...Object.keys(newQtyMap), ...Object.keys(oldQtyMap)]);
-
-      allItemIds.forEach(id => {
-        const oldQ = oldQtyMap[id] || 0;
-        const newQ = newQtyMap[id] || 0;
-        const diff = oldQ - newQ;
-
-        if (diff !== 0) {
-          deductionPromises.push(
-            update(ref(db, `products/${id}`), {
-              quantity: incrementFirebase(diff)
-            }).catch(err => console.warn("Stock sync skipped for", id, err))
-          );
-        }
-      });
-
-      await Promise.all(deductionPromises);
-
-      const finalItems = editedItems.filter(i => i.quantity > 0);
-      const newTotalItems = finalItems.reduce((sum, i) => sum + i.quantity, 0);
-      const newTotalAmount = finalItems.reduce((sum, i) => sum + (i.quantity * i.price), 0);
-
-      const status = newTotalItems === 0 ? 'Cancelled' : originalOrder.status;
-
-      await update(ref(db, `orders/${originalOrder.id}`), {
-        items: finalItems,
-        totalItems: newTotalItems,
-        totalAmount: newTotalAmount,
-        status: status
-      });
-
-      setEditingOrderId(null);
-    } catch (error) {
-      console.error("Failed to save order updates:", error);
-      alert("Error saving order updates.");
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -153,7 +93,6 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
-      // Reset state on close
       setTimeout(() => {
         handleLogout();
       }, 300);
@@ -195,18 +134,30 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
               {!isSearching ? (
                 <form onSubmit={handleSearch} className="space-y-6">
                   <p className="text-[#6B4F4F] font-light mb-8">
-                    Enter your secure Order ID to view your live order status.
+                    Enter the exact Name and Phone Number you used during checkout to view your live order status.
                   </p>
                   
                   <div>
-                    <label className="block text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold mb-2">Order ID</label>
+                    <label className="block text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold mb-2">Full Name</label>
                     <input 
                       type="text" 
-                      value={orderId}
-                      onChange={e => setOrderId(e.target.value)}
+                      value={name}
+                      onChange={e => setName(e.target.value)}
                       required
-                      placeholder="e.g. -NzVb..."
-                      className="w-full p-4 rounded-xl border border-[#E8D8C8] bg-white text-[#3A2E2A] placeholder-[#6B4F4F]/40 focus:outline-none focus:border-[#9E3D3D] transition-colors font-mono text-sm"
+                      placeholder="e.g. Sara Ahmed"
+                      className="w-full p-4 rounded-xl border border-[#E8D8C8] bg-white text-[#3A2E2A] placeholder-[#6B4F4F]/40 focus:outline-none focus:border-[#9E3D3D] transition-colors"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-[10px] tracking-[0.2em] uppercase text-[#6B4F4F] font-semibold mb-2">Phone Number</label>
+                    <input 
+                      type="tel" 
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
+                      required
+                      placeholder="e.g. 0612345678"
+                      className="w-full p-4 rounded-xl border border-[#E8D8C8] bg-white text-[#3A2E2A] placeholder-[#6B4F4F]/40 focus:outline-none focus:border-[#9E3D3D] transition-colors"
                     />
                   </div>
 
@@ -214,7 +165,7 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
                     type="submit"
                     className="w-full py-4 mt-4 bg-[#731625] text-white rounded-xl font-light tracking-wide hover:bg-[#5a111d] transition-colors flex items-center justify-center gap-2"
                   >
-                    <Search size={18} /> Find My Order
+                    <Search size={18} /> Find My Orders
                   </button>
                 </form>
               ) : (
@@ -226,7 +177,7 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
                   ) : myOrders.length === 0 ? (
                     <div className="text-center py-12">
                       <p className="text-[#3A2E2A] font-medium text-lg mb-2">No orders found</p>
-                      <p className="text-[#6B4F4F] font-light mb-6">We couldn't find any orders matching those details.</p>
+                      <p className="text-[#6B4F4F] font-light mb-6">We couldn't find any orders associated with those details.</p>
                       <button onClick={handleLogout} className="text-[#9E3D3D] font-medium hover:underline text-sm uppercase tracking-wider">
                         Try Again
                       </button>
@@ -241,7 +192,7 @@ const OrderTrackingModal = ({ isOpen, onClose }) => {
                       </div>
 
                       {myOrders.map(order => (
-                        <div key={order.id} className="bg-white rounded-2xl p-6 border border-[#E8D8C8] shadow-sm relative overflow-hidden transition-all duration-300">
+                        <div key={order.id} className={`bg-white rounded-2xl p-6 border ${order.status === 'Cancelled' ? 'border-red-200 opacity-75' : 'border-[#E8D8C8]'} shadow-sm relative overflow-hidden transition-all duration-300`}>
                           <div className="flex justify-between items-start mb-4 border-b border-[#E8D8C8]/50 pb-4">
                             <div>
                               <p className="text-xs text-[#6B4F4F] mb-1">
