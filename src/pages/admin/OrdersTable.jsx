@@ -260,14 +260,6 @@ const OrdersTable = () => {
           <h1 className="text-2xl md:text-3xl font-light tracking-wide text-[#3A2E2A] mb-1">Orders</h1>
           <p className="text-[#6B4F4F]/70 text-sm tracking-wide">Manage customer orders and status</p>
         </div>
-        
-        <button
-          onClick={exportToCSV}
-          className="flex items-center justify-center gap-2 bg-[#FAF6F2] text-[#3A2E2A] px-5 py-2.5 rounded-xl border border-[#E8D8C8] hover:bg-[#E8D8C8]/60 transition-colors shadow-sm font-medium text-sm"
-        >
-          <Download size={16} />
-          Export CSV
-        </button>
       </div>
 
       {/* Search + Filter — stack on mobile, row on desktop */}
@@ -298,6 +290,15 @@ const OrdersTable = () => {
               <option value="Delivered - Payment Pending">Delivered - Payment Pending</option>
             </select>
           </div>
+
+          <button
+            onClick={exportToCSV}
+            className="flex items-center justify-center gap-2 bg-[#FAF6F2] text-[#3A2E2A] px-4 py-2.5 rounded-xl border border-[#E8D8C8] hover:bg-[#E8D8C8]/60 transition-colors shadow-sm font-medium text-sm flex-shrink-0"
+            title="Export to CSV"
+          >
+            <Download size={16} className="text-[#9E3D3D]" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
         </div>
       </div>
 
