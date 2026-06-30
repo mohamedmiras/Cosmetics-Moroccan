@@ -47,6 +47,10 @@ const CheckoutPage = ({ onBack }) => {
         const productRef = ref(db, `products/${item.id}`);
         return update(productRef, {
           quantity: incrementFirebase(-item.quantity)
+        }).catch(err => {
+          console.warn("Stock deduction skipped (likely due to zero-stock rules):", err);
+          // Resolve gracefully so the order can still be placed as a backorder
+          return null;
         });
       });
       
