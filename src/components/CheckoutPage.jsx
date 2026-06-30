@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { ArrowLeft, Check, CreditCard, Wallet, Lock, ShieldCheck, ChevronRight } from 'lucide-react';
-import { ref, push, runTransaction } from 'firebase/database';
+import { ref, push, update, increment as incrementFirebase } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -45,15 +45,8 @@ const CheckoutPage = ({ onBack }) => {
     try {
       const deductionPromises = cartItems.map((item) => {
         const productRef = ref(db, `products/${item.id}`);
-        return runTransaction(productRef, (currentData) => {
-          if (currentData === null) {
-            return currentData; // Let Firebase fetch the real data
-          }
-          if (currentData) {
-            currentData.quantity -= item.quantity;
-            return currentData;
-          }
-          return; // Abort if something goes wrong
+        return update(productRef, {
+          quantity: incrementFirebase(-item.quantity)
         });
       });
       
