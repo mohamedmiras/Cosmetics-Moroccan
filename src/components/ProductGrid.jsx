@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import ProductCard from './ProductCard';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoveHorizontal } from 'lucide-react';
 
 const ProductGrid = ({ products }) => {
   const scrollRef = useRef(null);
@@ -93,12 +93,11 @@ const ProductGrid = ({ products }) => {
         </div>
       </div>
       
-      {/* Mobile Swipe Hint */}
-      <div className="md:hidden flex justify-center mt-4">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[#8c7a6b] flex items-center gap-2">
-          <ChevronLeft className="w-3 h-3" />
-          Swipe to explore
-          <ChevronRight className="w-3 h-3" />
+      {/* Universal Swipe/Drag Hint */}
+      <div className="flex justify-center mt-4">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[#8c7a6b] flex items-center gap-2 bg-white/50 px-4 py-2 rounded-full border border-[#E8D8C8]/50 shadow-sm">
+          <MoveHorizontal className="w-4 h-4 text-[#731625]" />
+          Drag or Swipe to Explore
         </p>
       </div>
 
